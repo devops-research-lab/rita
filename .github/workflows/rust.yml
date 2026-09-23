@@ -1,146 +1,188 @@
 name: Rust tests
-
 on:
-  push:
-    branches: [master]
-  pull_request:
-    branches: [master]
-
+  push: null
 env:
   CARGO_TERM_COLOR: always
-
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v2
-      - name: Check Rita and Rita Exit x86
-        run: cargo check --all
-  test:
-    needs: check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v2
-      - name: Run Rita and Rita Exit tests
-        run: cargo test --verbose --all
-  rustfmt:
-    needs: check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Check code formatting
-        run: rustup component add rustfmt && cargo fmt --all -- --check
-  clippy:
-    needs: check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v2
-      - name: Check for Clippy lints
-        run: rustup component add clippy && cargo clippy --all --all-targets --all-features -- -D warnings
-  audit:
-    needs: check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v2
-      - name: Run Cargo Audit
-        run: cargo install cargo-audit && cargo audit
-  cross-aarch64:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v2
-      - name: Cross test aarch64
-        run: cargo install cross && cross build --target aarch64-unknown-linux-musl --verbose -p rita_bin --bin rita
-  cross-armv7:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v2
-      - name: Cross test armv7
-        run: cargo install cross && cross build --target armv7-unknown-linux-musleabihf --verbose -p rita_bin --bin rita
-  integration-test-five-nodes:
-    needs: check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v2
-        with:
-          cache-on-failure: true
-      - name: Run integration test
-        run:  bash scripts/integration_tests/all-up-test-ci.sh FIVE_NODES
-  integration-test-althea-payment:
-    needs: check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v2
-        with:
-          cache-on-failure: true
-      - name: Run integration test
-        run:  bash scripts/integration_tests/all-up-test-ci.sh PAYMENTS_ALTHEA
-  integration-test-debts:
-    needs: check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v2
-        with:
-          cache-on-failure: true
-      - name: Run integration test
-        run:  bash scripts/integration_tests/all-up-test-ci.sh DEBTS_TEST
-  integration-test-eth-payments:
-    needs: check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v2
-        with:
-          cache-on-failure: true
-      - name: Run integration test
-        run:  bash scripts/integration_tests/all-up-test-ci.sh ETH_PAYMENTS
-  integration-test-multi-exit:
-    needs: check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v2
-        with:
-          cache-on-failure: true
-      - name: Run integration test
-        run:  bash scripts/integration_tests/all-up-test-ci.sh MULTI_EXIT
-  integration-test-validate-contract:
-    needs: check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v2
-        with:
-          cache-on-failure: true
-      - name: Run integration test
-        run:  bash scripts/integration_tests/all-up-test-ci.sh CONTRACT_TEST
-  integration-test-snat-exit:
-    needs: check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v2
-        with:
-          cache-on-failure: true
-      - name: Run integration test
-        run:  bash scripts/integration_tests/all-up-test-ci.sh SNAT_EXIT
-  integration-test-cgnat-exit:
-    needs: check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v2
-        with:
-          cache-on-failure: true
-      - name: Run integration test
-        run:  bash scripts/integration_tests/all-up-test-ci.sh CGNAT_EXIT
+    - name: stepify-probe-check
+      run: echo stepify-probe-check
+    - uses: actions/checkout@v2
+    - uses: Swatinem/rust-cache@v2
+    - name: Check Rita and Rita Exit x86
+      run: cargo check --all
+    - name: stepify-tail-check
+      run: echo stepify-tail-check
+      id: _bre_check
+    - name: stepify-probe-test
+      run: echo stepify-probe-test
+    - uses: Swatinem/rust-cache@v2
+    - name: Run Rita and Rita Exit tests
+      run: cargo test --verbose --all
+    - name: stepify-tail-test
+      run: echo stepify-tail-test
+      id: _bre_test
+    - name: stepify-probe-rustfmt
+      run: echo stepify-probe-rustfmt
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: Check code formatting
+      run: rustup component add rustfmt && cargo fmt --all -- --check
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-tail-rustfmt
+      run: echo stepify-tail-rustfmt
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-probe-clippy
+      run: echo stepify-probe-clippy
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - uses: Swatinem/rust-cache@v2
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: Check for Clippy lints
+      run: rustup component add clippy && cargo clippy --all --all-targets --all-features -- -D warnings
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-tail-clippy
+      run: echo stepify-tail-clippy
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-probe-audit
+      run: echo stepify-probe-audit
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-fault-audit
+      run: exit 1
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - uses: Swatinem/rust-cache@v2
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: Run Cargo Audit
+      run: cargo install cargo-audit && cargo audit
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-tail-audit
+      run: echo stepify-tail-audit
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-probe-integration-test-five-nodes
+      run: echo stepify-probe-integration-test-five-nodes
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - uses: Swatinem/rust-cache@v2
+      with:
+        cache-on-failure: true
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: Run integration test
+      run: bash scripts/integration_tests/all-up-test-ci.sh FIVE_NODES
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-tail-integration-test-five-nodes
+      run: echo stepify-tail-integration-test-five-nodes
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-probe-integration-test-althea-payment
+      run: echo stepify-probe-integration-test-althea-payment
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - uses: Swatinem/rust-cache@v2
+      with:
+        cache-on-failure: true
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: Run integration test
+      run: bash scripts/integration_tests/all-up-test-ci.sh PAYMENTS_ALTHEA
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-tail-integration-test-althea-payment
+      run: echo stepify-tail-integration-test-althea-payment
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-probe-integration-test-debts
+      run: echo stepify-probe-integration-test-debts
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - uses: Swatinem/rust-cache@v2
+      with:
+        cache-on-failure: true
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: Run integration test
+      run: bash scripts/integration_tests/all-up-test-ci.sh DEBTS_TEST
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-tail-integration-test-debts
+      run: echo stepify-tail-integration-test-debts
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-probe-integration-test-eth-payments
+      run: echo stepify-probe-integration-test-eth-payments
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - uses: Swatinem/rust-cache@v2
+      with:
+        cache-on-failure: true
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: Run integration test
+      run: bash scripts/integration_tests/all-up-test-ci.sh ETH_PAYMENTS
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-tail-integration-test-eth-payments
+      run: echo stepify-tail-integration-test-eth-payments
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-probe-integration-test-multi-exit
+      run: echo stepify-probe-integration-test-multi-exit
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - uses: Swatinem/rust-cache@v2
+      with:
+        cache-on-failure: true
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: Run integration test
+      run: bash scripts/integration_tests/all-up-test-ci.sh MULTI_EXIT
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-tail-integration-test-multi-exit
+      run: echo stepify-tail-integration-test-multi-exit
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-probe-integration-test-validate-contract
+      run: echo stepify-probe-integration-test-validate-contract
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - uses: Swatinem/rust-cache@v2
+      with:
+        cache-on-failure: true
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: Run integration test
+      run: bash scripts/integration_tests/all-up-test-ci.sh CONTRACT_TEST
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-tail-integration-test-validate-contract
+      run: echo stepify-tail-integration-test-validate-contract
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-probe-integration-test-snat-exit
+      run: echo stepify-probe-integration-test-snat-exit
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - uses: Swatinem/rust-cache@v2
+      with:
+        cache-on-failure: true
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: Run integration test
+      run: bash scripts/integration_tests/all-up-test-ci.sh SNAT_EXIT
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-tail-integration-test-snat-exit
+      run: echo stepify-tail-integration-test-snat-exit
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-probe-integration-test-cgnat-exit
+      run: echo stepify-probe-integration-test-cgnat-exit
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - uses: Swatinem/rust-cache@v2
+      with:
+        cache-on-failure: true
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: Run integration test
+      run: bash scripts/integration_tests/all-up-test-ci.sh CGNAT_EXIT
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-tail-integration-test-cgnat-exit
+      run: echo stepify-tail-integration-test-cgnat-exit
+      if: '!cancelled() && steps._bre_check.conclusion == ''success'''
+    - name: stepify-probe-cross-aarch64
+      run: echo stepify-probe-cross-aarch64
+      if: '!cancelled() && steps._bre_test.conclusion == ''success'''
+    - uses: Swatinem/rust-cache@v2
+      if: '!cancelled() && steps._bre_test.conclusion == ''success'''
+    - name: Cross test aarch64
+      run: cargo install cross && cross build --target aarch64-unknown-linux-musl --verbose -p rita_bin
+        --bin rita
+      if: '!cancelled() && steps._bre_test.conclusion == ''success'''
+    - name: stepify-tail-cross-aarch64
+      run: echo stepify-tail-cross-aarch64
+      if: '!cancelled() && steps._bre_test.conclusion == ''success'''
+    - name: stepify-probe-cross-armv7
+      run: echo stepify-probe-cross-armv7
+      if: '!cancelled() && steps._bre_test.conclusion == ''success'''
+    - uses: Swatinem/rust-cache@v2
+      if: '!cancelled() && steps._bre_test.conclusion == ''success'''
+    - name: Cross test armv7
+      run: cargo install cross && cross build --target armv7-unknown-linux-musleabihf --verbose -p rita_bin
+        --bin rita
+      if: '!cancelled() && steps._bre_test.conclusion == ''success'''
+    - name: stepify-tail-cross-armv7
+      run: echo stepify-tail-cross-armv7
+      if: '!cancelled() && steps._bre_test.conclusion == ''success'''
